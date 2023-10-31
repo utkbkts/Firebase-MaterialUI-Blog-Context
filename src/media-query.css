@@ -1,0 +1,38 @@
+@media(max-width:768px){
+    .Content{
+        display: none;
+    }
+}
+@media(min-width:768px){
+    .Mobile-Navbar{
+        display: none;
+    }
+    .hamburger{
+        display: none;
+    }
+}
+@media(max-width:948px){
+    .Content h1{
+        font-size: 14px;
+    }
+}
+@media(max-width:978px){
+   .Home .__b{
+    flex-direction: column;
+    width: 100%;
+   }
+   .MuiPaper-root{
+    width: 100% !important;
+   }
+   .Swiper__slide{
+    width: 100% !important;
+   }
+   .__b .__c .__e{
+    flex-direction: column;
+    width: 100%;
+align-items: flex-start;
+   }
+   .__b .__c  .__e img{
+    width: 100%;
+   }
+}
