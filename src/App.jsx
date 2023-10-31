@@ -33,6 +33,7 @@ const App = () => {
         <Header handleSignOut={handleSignOut} User={User} setUser={setUser}/>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/search" element={<Home />} />
           <Route path="/detail/:id" element={<Detail />} />
           <Route path="/create" element={<AddEditBlog />} />
           <Route path="/update/:id" element={<AddEditBlog />} />

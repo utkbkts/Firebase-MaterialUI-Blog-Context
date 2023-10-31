@@ -5,9 +5,11 @@ import Blog from "../components/Blog";
 import Tags from "../components/Tags";
 import Mostpopular from "../components/Mostpopular";
 import Trending from "../components/Trending";
+import Search from "../components/Search";
 const Home = () => {
   const context = useContext(MyContext);
-  const { mode, Getblog } = context;
+  const { mode} = context;
+
   return (
     <div className="Home">
       <div className="__a">
@@ -17,6 +19,7 @@ const Home = () => {
         <Blog />
         <div className="__h">
           <Tags/>
+          <Search />
          <Mostpopular/>
         </div>
       </div>

@@ -19,8 +19,12 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { isEmpty, isNull } from "lodash";
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
 const State = (props) => {
   const [mode, setMode] = useState("light");
   const [loading, setloading] = useState(false);
@@ -262,6 +266,49 @@ const State = (props) => {
       GetTrendingBlog();
     };
   }, []);
+
+  //!Search
+  const queryString = useQuery();
+  const [search, setSearch] = useState("");
+  const searchQuery = queryString.get("searchQuery");
+  const searchBlogs = async () => {
+    const blogRef = collection(db, "Blogs");
+    const searchQueryLower = searchQuery.toLowerCase();
+    //! Başlık (title) araması
+    const searchTitleQuery = query(blogRef, where("title", "==", searchQuery));
+    const titleSnapshot = await getDocs(searchTitleQuery);
+    let searchTitleBlogs = [];
+    titleSnapshot.forEach((doc) => {
+      searchTitleBlogs.push({ id: doc.id, ...doc.data() });
+    });
+    //! Etiket (tags) araması
+    const searchTagQuery = query(
+      blogRef,
+      where("tags", "array-contains", searchQuery)
+    );
+    const tagSnapshot = await getDocs(searchTagQuery);
+    let searchTagBlogs = [];
+    tagSnapshot.forEach((doc) => {
+      searchTagBlogs.push({ id: doc.id, ...doc.data() });
+    });
+    const combinedSearchBlogs = searchTitleBlogs.concat(searchTagBlogs);
+    setGetBlog(combinedSearchBlogs);
+  };
+
+  useEffect(() => {
+    if (!isNull(searchQuery)) {
+      searchBlogs();
+    }
+  }, [searchQuery]);
+
+  const handleChange = (e) => {
+    const { value } = e.target;
+    if (isEmpty(value)) {
+      GetData();
+    }
+    setSearch(value);
+  };
+
   return (
     <MyContext.Provider
       value={{
@@ -284,7 +331,9 @@ const State = (props) => {
         Getblog,
         handleDeleteBlog,
         Tags,
-        Trending
+        Trending,
+        handleChange,
+        search,
       }}
     >
       {props.children}
