@@ -11,6 +11,9 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import { auth } from "./firebase/config";
 import { signOut } from "firebase/auth";
+import TagBlog from "./pages/TagBlog";
+import CategoryBlog from "./pages/CategoryBlog";
+import ScrollTop from "./components/ScrollTop";
 
 const App = () => {
   const [User,setUser]=useState(null)
@@ -31,15 +34,19 @@ const App = () => {
     <div className="App">
       <State>
         <Header handleSignOut={handleSignOut} User={User} setUser={setUser}/>
+        <ScrollTop/>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Home />} />
           <Route path="/detail/:id" element={<Detail />} />
           <Route path="/create" element={<AddEditBlog />} />
           <Route path="/update/:id" element={<AddEditBlog />} />
+          <Route path="/tag/:tag" element={<TagBlog />} />
           <Route path="/about" element={<About />} />
-          <Route path="/login" element={ <Login User={User} setUser={setUser}/>} />
+          <Route path="/about" element={<About />} />
+          <Route path="/category/:category" element={ <CategoryBlog/>} />
           <Route path="/register" element={<Register User={User} setUser={setUser}/>} />
+          <Route path="/login" element={<Login User={User} setUser={setUser}/>} />
           <Route path="*" element={<Notfound />} />
         </Routes>
       </State>

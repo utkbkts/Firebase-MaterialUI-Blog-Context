@@ -21,15 +21,23 @@
         width: 100%;
         max-width: 1200px;
         gap: 1rem;
+
+        .lazy{
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 3rem;
+            .__d {
+                border-bottom: 1px solid darkgray;
+                padding: 5px;
+            }
+        }
     }
     .__c {
         display: flex;
         flex-direction: column;
         flex: 2;
-        .__d {
-            border-bottom: 1px solid darkgray;
-            padding: 5px;
-        }
+       
         .__e {
             display: flex;
             align-items: center;

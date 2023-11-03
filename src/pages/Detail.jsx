@@ -1,53 +1,85 @@
 import React, { useContext, useEffect, useState } from "react";
 import MyContext from "../context/Context";
 import { useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
 import "../utils/Detail.scss";
 import moment from "moment";
-
+import Tags from "../components/Tags";
+import Mostpopular from "../components/Mostpopular";
+import RelatedBlogs from "../components/RelatedBlog";
+import { isEmpty } from "lodash";
+import Comment from "../components/Comment";
+import CommentBox from "../components/CommentBox";
+import UserComments from "../components/Comment";
+import Likes from "../components/Likes";
 const Detail = () => {
   const context = useContext(MyContext);
-  const { mode, loading, setloading } = context;
-  const [BlogDetails, setBlogdetail] = useState(null);
+  const {
+    mode,
+    relatedBlogs,
+    setUserComment,
+    comments,
+    handleComment,
+    userId,
+    userComment,
+    blog,
+    getBlogDetail,
+    setLocalId
+  } = context;
   const { id } = useParams();
-  const GetBlogDetails = async () => {
-    setloading(true);
-    const docRef = doc(db, "Blogs", id);
-    const BlogDetail = await getDoc(docRef);
-    setBlogdetail(BlogDetail.data());
-    setloading(false);
-  };
   useEffect(() => {
-    id && GetBlogDetails();
-  }, [id]);
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    id && getBlogDetail(id);
+    id && setLocalId(id);
+  }, [id, setLocalId, getBlogDetail]);
   return (
     <>
       <div className="Details">
         <div className="__a">
-          <img src={BlogDetails?.imageURL} alt="" />
+          <img src={blog?.imageURL} alt="" />
           <div className="__b">
-            <span className="title">{BlogDetails?.title}</span>
-            <span>{moment(BlogDetails?.timestamps).format("LL")}</span>
+            <span className="title">{blog?.title}</span>
+            <span>{moment(blog?.timestamps).format("LL")}</span>
           </div>
         </div>
       </div>
       <div className="__cauthor">
         <div className="__d">
-          <div className="__author">
-            By {BlogDetails?.author} --- &nbsp;
-            {moment(BlogDetails?.timestamps).startOf("day").fromNow()}
+          <div>
+            <div className="__author">
+              By {blog?.author} --- &nbsp;
+              {moment(blog?.timestamps).startOf("day").fromNow()}
+              <Likes/>
+            </div>
+            <div className="__g">
+              <span className="description">{blog?.description}</span>
+            </div>
           </div>
-          <div className="__g">
-            <span className="description">{BlogDetails?.description}</span>
+          <div>
+            <RelatedBlogs id={id} RelatedBlog={relatedBlogs} />
           </div>
+          <br />
+          <div className="custom">
+            <h4 className="small">{comments?.length} Comment</h4>
+            {isEmpty(comments) ? (
+              <UserComments message={"No comment yet posted on this blog"} />
+            ) : (
+              <>
+                {comments?.map((x) => (
+                  <Comment {...x} />
+                ))}
+              </>
+            )}
+          </div>
+          <br />
+          <CommentBox
+            userId={userId}
+            userComment={userComment}
+            setUserComment={setUserComment}
+            handleComment={handleComment}
+          />
         </div>
         <div className="__f">
-          <h2>Tags</h2>
-          <h3>Most Popular</h3>
+          <Tags />
+          <Mostpopular />
         </div>
       </div>
     </>

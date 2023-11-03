@@ -17,9 +17,14 @@ import {
   deleteDoc,
   where,
   getDocs,
+  limit,
+  orderBy,
+  startAfter,
+  Timestamp,
+  getDoc,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { isEmpty, isNull } from "lodash";
 
 function useQuery() {
@@ -29,7 +34,8 @@ const State = (props) => {
   const [mode, setMode] = useState("light");
   const [loading, setloading] = useState(false);
   const [User, setUser] = useState(null);
-
+  const [totalBlogs, setTotalBlogs] = useState([]);
+  const {id}= useParams()
   useEffect(() => {
     auth.onAuthStateChanged((authuser) => {
       if (authuser) {
@@ -203,6 +209,7 @@ const State = (props) => {
     setForm({ ...form, tags: newTags });
   };
   //!HomeGEtBlog
+
   const [Getblog, setGetBlog] = useState([]);
   const [Tags, setTags] = useState([]);
   const GetData = async () => {
@@ -212,15 +219,13 @@ const State = (props) => {
         let list = [];
         let tags = [];
         snapshot.docs.forEach((doc) => {
-          const docTags = doc.get("tags");
-          if (Array.isArray(docTags)) {
-            tags = [...tags, ...docTags];
-          }
+          tags.push(...doc.get("tags"));
           list.push({ id: doc.id, ...doc.data() });
         });
-        setGetBlog(list);
+        // setGetBlog(list);
         const uniqueTags = [...new Set(tags)];
         setTags(uniqueTags);
+        setTotalBlogs(list);
       },
       (error) => {
         console.log(error);
@@ -293,6 +298,7 @@ const State = (props) => {
     });
     const combinedSearchBlogs = searchTitleBlogs.concat(searchTagBlogs);
     setGetBlog(combinedSearchBlogs);
+    setEmptyIs(true);
   };
 
   useEffect(() => {
@@ -305,10 +311,150 @@ const State = (props) => {
     const { value } = e.target;
     if (isEmpty(value)) {
       GetData();
+      setEmptyIs(false);
     }
     setSearch(value);
   };
 
+  //!Lazy Loading
+  const [lastVisible, setlastVisible] = useState(null);
+  const [EmptyIs, setEmptyIs] = useState(false);
+  const getBlogs = async () => {
+    const blogRef = collection(db, "Blogs");
+    const firstFour = query(blogRef, orderBy("title"), limit(4));
+    const docSnapShot = await getDocs(firstFour);
+    setGetBlog(docSnapShot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    setlastVisible(docSnapShot.docs[docSnapShot.docs.length - 1]);
+  };
+  const updateState = (docsnapShot) => {
+    const CollectionEmpty = docsnapShot.size === 0;
+    if (!CollectionEmpty) {
+      const blogData = docsnapShot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setGetBlog((blogs) => [...blogs, ...blogData]);
+      setlastVisible(docsnapShot.docs[docsnapShot.docs.length - 1]);
+    } else {
+      console.log("no more blog to display");
+      setEmptyIs(true);
+    }
+  };
+  const fetchMore = async () => {
+    setloading(true);
+    const blogRef = collection(db, "Blogs");
+    const nextFour = query(
+      blogRef,
+      orderBy("title"),
+      limit(4),
+      startAfter(lastVisible)
+    );
+    const docsnapShot = await getDocs(nextFour);
+    setloading(false);
+    updateState(docsnapShot);
+  };
+
+  useEffect(() => {
+    getBlogs();
+    setEmptyIs(false);
+  }, []);
+
+  //!category count aynı kategoriden kaç tane var
+  const counts = totalBlogs.reduce((prevValue, currentValue) => {
+    let name = currentValue.category;
+    if (!prevValue.hasOwnProperty(name)) {
+      prevValue[name] = 0;
+    }
+    prevValue[name]++;
+    return prevValue;
+  }, {});
+
+  const categoryCount = Object.keys(counts).map((k) => {
+    return {
+      category: k,
+      count: counts[k],
+    };
+  });
+  //!commnet
+  const [blog, setBlog] = useState(null);
+  const [tagsuniq, setTagsuniq] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [localId, setLocalId] = useState("");
+  let [likes, setLikes] = useState([]);
+  const [userComment, setUserComment] = useState("");
+  const [relatedBlogs, setRelatedBlogs] = useState([]);
+  const userId = User?.uid;
+  const handleComment = async (e) => {
+    e.preventDefault();
+    if (userComment === "") {
+      return window.confirm("boş bırakılamaz");
+    }
+    comments.push({
+      createdAt: Timestamp.fromDate(new Date()),
+      userId,
+      name: User?.displayName,
+      body: userComment,
+      imageURL: User?.photoURL,
+    });
+    console.log("başarılı");
+    await updateDoc(doc(db, "Blogs", localId), {
+      ...blog,
+      comments,
+      timestamp: serverTimestamp(),
+    });
+    setComments(comments);
+    setUserComment("");
+  };
+
+  //!blog detay
+  const getBlogDetail = async () => {
+    setloading(true);
+    const blogRef = collection(db, "Blogs");
+    const docRef = doc(db, "Blogs", localId);
+    const blogDetail = await getDoc(docRef);
+    const blogs = await getDocs(blogRef);
+    let tags = [];
+    blogs.docs.map((doc) => tags.push(...doc.get("tags")));
+    let uniqueTags = [...new Set(tags)];
+    setTagsuniq(uniqueTags);
+    setBlog(blogDetail.data());
+    const relatedBlogsQuery = query(
+      blogRef,
+      where("tags", "array-contains-any", blogDetail.data().tags, limit(3))
+    );
+    setComments(blogDetail.data().comments ? blogDetail.data().comments : []);
+    setLikes(blogDetail.data().likes ? blogDetail.data().likes : []);
+    const relatedBlogSnapshot = await getDocs(relatedBlogsQuery);
+    const relatedBlogs = [];
+    relatedBlogSnapshot.forEach((doc) => {
+      relatedBlogs.push({ id: doc.id, ...doc.data() });
+    });
+    setRelatedBlogs(relatedBlogs);
+    setloading(false);
+  };
+
+  //! handleLike
+
+  const handleLike = async () => {
+    if (userId) {
+      if (blog?.likes) {
+        const index = likes.findIndex((id) => id === userId);
+        if (index === -1) {
+          likes.push(userId);
+          setLikes([...new Set(likes)]);
+        } else {
+          likes = likes.filter((id) => id !== userId);
+          setLikes(likes);
+        }
+      }
+      await updateDoc(doc(db,"Blogs",localId),{
+        ...blog,
+        likes,
+        timestamp:serverTimestamp()
+      })
+    }
+  };
+ 
   return (
     <MyContext.Provider
       value={{
@@ -334,6 +480,26 @@ const State = (props) => {
         Trending,
         handleChange,
         search,
+        fetchMore,
+        EmptyIs,
+        categoryCount,
+        setTagsuniq,
+        setComments,
+        setRelatedBlogs,
+        relatedBlogs,
+        setUserComment,
+        comments,
+        handleComment,
+        userId,
+        userComment,
+        setBlog,
+        blog,
+        getBlogDetail,
+        handleLike,
+        likes,
+        setLikes,
+        localId,
+        setLocalId
       }}
     >
       {props.children}

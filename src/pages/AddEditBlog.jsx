@@ -72,6 +72,7 @@ const handleSubmit = async (e) => {
           timestamp: serverTimestamp(),
           author: User.displayName,
           userId: User.uid,
+          createdImg:User.photoURL
         });
         console.log("Blog created successfully");
       } catch (err) {

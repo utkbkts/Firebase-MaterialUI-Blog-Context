@@ -20,9 +20,9 @@ const Trending = () => {
         modules={[Pagination]}
         className="mySwiper"
       >
-        {Trending.map((x) => (
+        {Trending.map((x,index) => (
           <div key={x.id}>
-            <SwiperSlide className="Trending">
+            <SwiperSlide  className="Trending">
               <img src={x.imageURL} alt="" />
               <div className="title">
                 <span>{x.title}</span>

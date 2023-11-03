@@ -24,7 +24,7 @@ const Header = ({ User, setUser, handleSignOut }) => {
       <div className="Content">
         <div className="Navbar">
           <div>
-            <h1>Social Media</h1>
+            <h1>Blog Media</h1>
           </div>
           <ul className="__a">
            <Link to={"/"}> <ListItemButton>Home</ListItemButton></Link>
