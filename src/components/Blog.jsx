@@ -6,7 +6,9 @@ import EditIcon from "@mui/icons-material/Edit";
 import MyContext from "../context/Context";
 import moment from "moment";
 import { Link } from "react-router-dom";
-const Blog = ({title,category,timestamps,description,userId,imageURL,id}) => {
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+const Blog = ({title,category,timestamps,description,userId,imageURL,id,likes,comments}) => {
   const context = useContext(MyContext);
   const { mode,handleDeleteBlog, User } = context;
   return (
@@ -46,6 +48,10 @@ const Blog = ({title,category,timestamps,description,userId,imageURL,id}) => {
                   </Link>
                 </div>
               )}
+               <div>
+            <span><ThumbUpIcon color="primary"/>{likes.length}</span>
+            <span><ChatBubbleOutlineIcon/>{comments.length}</span>
+          </div>
             </div>
           </div>
         </div>

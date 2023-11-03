@@ -18,6 +18,10 @@ const Card = ({ title, description, imageURL, id, likes, comments }) => {
           <Link to={`/detail/${id}`}>
             <Button variant="contained">Read More</Button>
           </Link>
+          <div>
+            <span>{likes.length}</span>
+            <span>{comments.length}</span>
+          </div>
         </div>
       </div>
     </div>

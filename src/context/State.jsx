@@ -22,6 +22,9 @@ import {
   startAfter,
   Timestamp,
   getDoc,
+  endAt,
+  endBefore,
+  limitToLast,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useLocation, useParams } from "react-router-dom";
@@ -35,7 +38,7 @@ const State = (props) => {
   const [loading, setloading] = useState(false);
   const [User, setUser] = useState(null);
   const [totalBlogs, setTotalBlogs] = useState([]);
-  const {id}= useParams()
+  const { id } = useParams();
   useEffect(() => {
     auth.onAuthStateChanged((authuser) => {
       if (authuser) {
@@ -447,14 +450,98 @@ const State = (props) => {
           setLikes(likes);
         }
       }
-      await updateDoc(doc(db,"Blogs",localId),{
+      await updateDoc(doc(db, "Blogs", localId), {
         ...blog,
         likes,
-        timestamp:serverTimestamp()
-      })
+        timestamp: serverTimestamp(),
+      });
     }
   };
- 
+  //! pagination
+  const [currentPage, setcurrentPage] = useState(1);
+  const [paginationBlog, setPaginationblog] = useState([]);
+  const [count, setcount] = useState(null);
+  const [NoofPages, setNoofPages] = useState(null);
+  const [Lastvisiblepagination, setLastvisiblepagination] = useState(null);
+  const panigationblog = async () => {
+    const blogref = collection(db, "Blogs");
+    const first = query(blogref, orderBy("title"), limit(3));
+    const docsnapShot = await getDocs(first);
+    setPaginationblog(
+      docsnapShot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    );
+    setcount(docsnapShot.size);
+    if (docsnapShot.docs.length > 0) {
+      setLastvisiblepagination(docsnapShot.docs[docsnapShot.docs.length - 1]);
+    } else {
+      setLastvisiblepagination(null);
+    }
+  };
+  const getTotalBlog = async () => {
+    const blogref = collection(db, "Blogs");
+    const docsnapShot = await getDocs(blogref);
+    const totalblog = docsnapShot.size;
+    const totalPages = Math.ceil(totalblog / 3);
+    setNoofPages(totalPages);
+  };
+  const fetchMorePagination = async () => {
+    if (Lastvisiblepagination) {
+      const blogref = collection(db, "Blogs");
+      const nextblogQuery = query(
+        blogref,
+        orderBy("title"),
+        startAfter(Lastvisiblepagination),
+        limit(4)
+      );
+      const nextblogsnap = await getDocs(nextblogQuery);
+  
+      // Yeni sayfada yeni veriler yüklendiğinde paginationBlog sıfırlanır.
+      setPaginationblog(
+        nextblogsnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      );
+      setcount(nextblogsnap.size);
+  
+      if (nextblogsnap.docs.length > 0) {
+        setLastvisiblepagination(nextblogsnap.docs[nextblogsnap.docs.length - 1]);
+      } else {
+        setLastvisiblepagination(null);
+      }
+    }
+  };
+  
+  const fetchPrev = async () => {
+    if (Lastvisiblepagination) {
+      const blogref = collection(db, "Blogs");
+      const end =
+        NoofPages !== currentPage
+          ? endAt(Lastvisiblepagination)
+          : endBefore(Lastvisiblepagination);
+      const limitData =
+        NoofPages !== currentPage
+          ? limit(3)
+          : count <= 3 && NoofPages % 2 === 0
+          ? limit(3)
+          : limitToLast(3);
+      const prevquery = query(blogref, orderBy("title"), end, limitData);
+      const prevblogsnap = await getDocs(prevquery);
+  
+      // Yeni sayfada yeni veriler yüklendiğinde paginationBlog sıfırlanır.
+      setPaginationblog(
+        prevblogsnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      );
+      setcount(prevblogsnap.size);
+  
+      if (prevblogsnap.docs.length > 0) {
+        setLastvisiblepagination(prevblogsnap.docs[prevblogsnap.docs.length - 1]);
+      } else {
+        setLastvisiblepagination(null);
+      }
+    }
+  };
+  useEffect(() => {
+    panigationblog();
+    getTotalBlog();
+  }, []);
   return (
     <MyContext.Provider
       value={{
@@ -499,7 +586,13 @@ const State = (props) => {
         likes,
         setLikes,
         localId,
-        setLocalId
+        setLocalId,
+        paginationBlog,
+        currentPage,
+        NoofPages,
+        setcurrentPage,
+        fetchMorePagination,
+        fetchPrev,
       }}
     >
       {props.children}

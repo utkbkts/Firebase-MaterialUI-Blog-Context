@@ -59,3 +59,9 @@ cursor: pointer;
     flex-direction: column;
     display: flex;
   }
+  .custom{
+    width: auto;
+    height: 310px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }

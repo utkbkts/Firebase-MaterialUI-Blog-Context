@@ -14,6 +14,7 @@ import { signOut } from "firebase/auth";
 import TagBlog from "./pages/TagBlog";
 import CategoryBlog from "./pages/CategoryBlog";
 import ScrollTop from "./components/ScrollTop";
+import Blogs from "./pages/Blogs";
 
 const App = () => {
   const [User,setUser]=useState(null)
@@ -43,7 +44,7 @@ const App = () => {
           <Route path="/update/:id" element={<AddEditBlog />} />
           <Route path="/tag/:tag" element={<TagBlog />} />
           <Route path="/about" element={<About />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/blogs" element={<Blogs />} />
           <Route path="/category/:category" element={ <CategoryBlog/>} />
           <Route path="/register" element={<Register User={User} setUser={setUser}/>} />
           <Route path="/login" element={<Login User={User} setUser={setUser}/>} />

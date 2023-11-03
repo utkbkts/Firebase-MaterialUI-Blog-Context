@@ -8,7 +8,7 @@ import MobilNavbar from "./MobilNavbar";
 import { Link } from "react-router-dom";
 const Header = ({ User, setUser, handleSignOut }) => {
   const context = useContext(MyContext);
-  const { mode, toggleMode,setForm,form } = context;
+  const { mode, toggleMode, setForm, form } = context;
   const userID = User?.uid;
 
   const handleToggleMode = () => {
@@ -27,12 +27,19 @@ const Header = ({ User, setUser, handleSignOut }) => {
             <h1>Blog Media</h1>
           </div>
           <ul className="__a">
-           <Link to={"/"}> <ListItemButton>Home</ListItemButton></Link>
+            <Link to={"/"}>
+              {" "}
+              <ListItemButton>Home</ListItemButton>
+            </Link>
             <Link to={"/create"}>
               {" "}
               <ListItemButton>Create</ListItemButton>
             </Link>
             <ListItemButton>About</ListItemButton>
+            <Link to={"/blogs"}>
+              {" "}
+              <ListItemButton>Blogs</ListItemButton>
+            </Link>
           </ul>
           <ul className="__b">
             {userID ? (
